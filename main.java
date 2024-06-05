@@ -1,9 +1,6 @@
 package seubankingproject;
 import java.sql.*;
 import java.util.Scanner;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 
 public class SeuBankingProject {
     private static final String url = "jdbc:mysql://localhost:3306/seu_bank_project";
@@ -25,40 +22,40 @@ public class SeuBankingProject {
             statement.execute("CREATE TABLE IF NOT EXISTS Transactions (transaction_id INT PRIMARY KEY, account_id INT, transaction_type VARCHAR(10), amount DECIMAL(10, 2), timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (account_id) REFERENCES Accounts(account_id))");
         }
     }
-    
+
     private static void listAccounts(Connection connection) {
-    try (PreparedStatement statement = connection.prepareStatement("SELECT account_id, account_holder_name, balance FROM Accounts");
-         ResultSet resultSet = statement.executeQuery()) {
-        System.out.println("Account ID\tAccount Holder Name\tBalance");
-        System.out.println("===============================================");
-        while (resultSet.next()) {
-            int accountId = resultSet.getInt("account_id");
-            String accountHolderName = resultSet.getString("account_holder_name");
-            double balance = resultSet.getDouble("balance");
-            System.out.printf("%11d\t%-20s\t%.2f\n", accountId, accountHolderName, balance);
+        try (PreparedStatement statement = connection.prepareStatement("SELECT account_id, account_holder_name, balance FROM Accounts");
+             ResultSet resultSet = statement.executeQuery()) {
+            System.out.println("Account ID\tAccount Holder Name\tBalance");
+            System.out.println("===============================================");
+            while (resultSet.next()) {
+                int accountId = resultSet.getInt("account_id");
+                String accountHolderName = resultSet.getString("account_holder_name");
+                double balance = resultSet.getDouble("balance");
+                System.out.printf("%11d\t%-20s\t%.2f\n", accountId, accountHolderName, balance);
             }
         } catch (SQLException e) {
-        System.out.println("Error in SQL accounts: " + e.getMessage());
+            System.out.println("Error in SQL accounts: " + e.getMessage());
         }
     }
 
     private static void userControlConsole(Connection connection) {
-    Scanner scanner = new Scanner(System.in);
-    boolean running = true;
+        Scanner scanner = new Scanner(System.in);
+        boolean running = true;
 
-    while (running) {
-        System.out.println("\nSEU Banking System Project:");
-        System.out.println("1. Create Account");
-        System.out.println("2. Deposit");
-        System.out.println("3. Withdraw");
-        System.out.println("4. Check Balance");
-        System.out.println("5. Transfer");
-        System.out.println("6. List Accounts");
-        System.out.println("7. Exit");
+        while (running) {
+            System.out.println("\nSEU Banking System Project:");
+            System.out.println("1. Create Account");
+            System.out.println("2. Deposit");
+            System.out.println("3. Withdraw");
+            System.out.println("4. Check Balance");
+            System.out.println("5. Transfer");
+            System.out.println("6. List Accounts");
+            System.out.println("7. Exit");
 
-        System.out.print("To choice enter the given number: ");
-        int choice = scanner.nextInt();
-        scanner.nextLine();
+            System.out.print("To choice enter the given number: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine();
 
             switch (choice) {
                 case 1:
@@ -73,7 +70,8 @@ public class SeuBankingProject {
                     System.out.print("Enter deposit amount: ");
                     double depositAmount = scanner.nextDouble();
                     scanner.nextLine();
-                    deposit(connection, depositAccountID, depositAmount);
+                    Thread depositThread = new Thread(new DepositTask(connection, depositAccountID, depositAmount));
+                    depositThread.start();
                     break;
                 case 3:
                     System.out.print("Enter account ID number: ");
@@ -89,7 +87,7 @@ public class SeuBankingProject {
                     int balanceAccountID = scanner.nextInt();
                     scanner.nextLine();
                     double balance = getBalance(connection, balanceAccountID);
-                    System.out.println("Current balance are: " + balance);
+                    System.out.println("Current balance is: " + balance);
                     break;
                 case 5:
                     System.out.print("Enter source account ID number: ");
@@ -104,11 +102,11 @@ public class SeuBankingProject {
                     transfer(connection, fromAccountID, toAccountID, transferAmount);
                     break;
                 case 6:
-                listAccounts(connection);
-                break;
+                    listAccounts(connection);
+                    break;
                 case 7:
-                running = false;
-                break;
+                    running = false;
+                    break;
                 default:
                     System.out.println("Invalid choice.");
             }
@@ -126,26 +124,43 @@ public class SeuBankingProject {
         }
     }
 
-    private static void deposit(Connection connection, int accountId, double depositAmount) {
-    try (PreparedStatement statement = connection.prepareStatement("SELECT account_id, balance FROM Accounts WHERE account_id = ?")) {
-        statement.setInt(1, accountId);
-        try (ResultSet resultSet = statement.executeQuery()) {
-            if (resultSet.next()) {
-                int id = resultSet.getInt("account_id");
-                double balance = resultSet.getDouble("balance");
+    private static class DepositTask implements Runnable {
+        private final Connection connection;
+        private final int accountId;
+        private final double depositAmount;
 
-                try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Accounts SET balance = balance + ? WHERE account_id = ?")) {
-                    updateStatement.setDouble(1, depositAmount);
-                    updateStatement.setInt(2, id);
-                    updateStatement.executeUpdate();
-                    System.out.println("Deposit successful.");
-                }
-            } else {
-                System.out.println("Account ID number not found.");
+        public DepositTask(Connection connection, int accountId, double depositAmount) {
+            this.connection = connection;
+            this.accountId = accountId;
+            this.depositAmount = depositAmount;
+        }
+
+        @Override
+        public void run() {
+            deposit(connection, accountId, depositAmount);
+        }
+    }
+
+    private static void deposit(Connection connection, int accountId, double depositAmount) {
+        try (PreparedStatement statement = connection.prepareStatement("SELECT account_id, balance FROM Accounts WHERE account_id = ?")) {
+            statement.setInt(1, accountId);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    int id = resultSet.getInt("account_id");
+                    double balance = resultSet.getDouble("balance");
+
+                    try (PreparedStatement updateStatement = connection.prepareStatement("UPDATE Accounts SET balance = balance + ? WHERE account_id = ?")) {
+                        updateStatement.setDouble(1, depositAmount);
+                        updateStatement.setInt(2, id);
+                        updateStatement.executeUpdate();
+                        System.out.println("Deposit successful.");
+                    }
+                } else {
+                    System.out.println("Account ID number not found.");
                 }
             }
         } catch (SQLException e) {
-        System.out.println("Error to deposit: " + e.getMessage());
+            System.out.println("Error in deposit: " + e.getMessage());
         }
     }
 
@@ -167,7 +182,7 @@ public class SeuBankingProject {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error to withdrawal: " + e.getMessage());
+            System.out.println("Error in withdrawal: " + e.getMessage());
         }
     }
 
@@ -183,7 +198,7 @@ public class SeuBankingProject {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error to get balance: " + e.getMessage());
+            System.out.println("Error in get balance: " + e.getMessage());
             return 0.0;
         }
     }
@@ -220,7 +235,7 @@ public class SeuBankingProject {
             try {
                 connection.rollback();
             } catch (SQLException ex) {
-                System.out.println("Error in transaction to transfer: " + ex.getMessage());
+                System.out.println("Error in transaction transfer rollback: " + ex.getMessage());
             }
             System.out.println("Error in transfer: " + e.getMessage());
         } finally {
