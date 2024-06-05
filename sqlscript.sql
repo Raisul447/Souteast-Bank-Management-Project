@@ -7,7 +7,7 @@ CREATE TABLE Accounts (
 );
 
 CREATE TABLE Transactions (
-    transaction_id INT PRIMARY KEY,
+    transaction_id INT PRIMARY KEY AUTO_INCREMENT,
     account_id INT,
     transaction_type VARCHAR(10),
     amount DECIMAL(10, 2),
