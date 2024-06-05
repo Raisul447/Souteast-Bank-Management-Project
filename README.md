@@ -12,51 +12,74 @@ Southeast University - Final Project
 ## Task
 Create a simple banking system that supports concurrent transactions using Java threading and JDBC with SQL.
 
-## Part 1: Database Design
+## Design and Implementation
 
-### Accounts Table:
-- `account_id` (INT, Primary Key)
-- `account_holder_name` (VARCHAR)
-- `balance` (DECIMAL)
+### Design Overview
+SEU Banking System is a Java console based application for managing banking systems. Including account creation, deposits, withdrawals, balance checks, and transfers, using a MySQL database.
 
-### Transactions Table:
-- `transaction_id` (INT, Primary Key)
-- `account_id` (INT, Foreign Key)
-- `transaction_type` (VARCHAR) - ('DEPOSIT', 'WITHDRAWAL', 'TRANSFER')
-- `amount` (DECIMAL)
-- `timestamp` (TIMESTAMP)
+### Key Components
+- Main Class (SeuBankingProject):
+  - Manages database connection and initializes the application.
+  - Creates necessary database tables.
+  - Handles user interactions via a control console.
+- Database Tables:
+  - (Accounts) Stores account details.
+  - (Transactions) Logs transaction details.
+  - (Users) Manages user login details.
 
-## Part 2: Requirements
+### Functionality
+- User Registration and Login: Users register and log in to perform operations.
+- Account Operations: Create Account, Deposit, Withdraw, Check Balance, Transfer, List Accounts.
 
-### Account Management:
-- Implement functionality to create new accounts.
-- Implement functionality to view account details, including current balance.
+### Implementation Used
+- Used a JDBC connector driver to connect to MySQL.
+- Handles user input via console with Scanner.
+- Manages concurrent deposits using threads.
 
-### Transactions:
-- Implement functionality to perform deposits, withdrawals, and transfers between accounts.
-- Ensure that transactions are thread-safe and that the balance remains consistent.
+## Instructions to Set Up and Run the Application
 
-### Multi-threading:
-- Use Java threads to handle multiple transactions concurrently.
-- Implement synchronization to handle concurrent access to account balances.
-- Use appropriate transaction management to ensure data integrity.
+### Prerequisites
+- JDK installed.
+- XAMPP installed.
+- MySQL server installed and running.
+- MySQL JDBC Driver added.
 
-### Database Interaction:
-- Use JDBC to connect to a relational database (e.g., MySQL).
-- Implement CRUD operations for accounts and transactions using JDBC.
-- Ensure proper resource management (e.g., closing connections, statements, and result sets).
+### Database Setup
+1. Create database (seu_bank_project) in MySQL PHPmyAdmin.
+2. Create user (seu_bank_db) using password 12345678.
 
-## Part 3: Implementation Steps
+### Running the Application
+1. Copy the source code.
+2. Open the project in an IDE e.g NetBeans.
+3. Create database table and columns using provided SQL Query.
+4. Add MySQL JDBC Driver to the project.
+5. Run the main method in SeuBankingProject.
 
-### Setup the Database:
-- Create the database and tables using SQL.
-- Populate the tables with some initial data for testing.
+## Report
 
-### Java Application:
-- Create a Java class to represent an Account and a Transaction.
-- Implement JDBC utility classes for database operations.
-- Implement a multi-threaded application to handle transactions.
+### Testing Process and Results
 
-### Synchronization and Transaction Management:
-- Use synchronized blocks or other synchronization mechanisms to ensure thread safety.
-- Implement proper transaction management to handle commits and rollbacks.
+#### Testing Strategy
+- Run the program, the control console will open.
+- Create some users for a bank account.
+- Deposit balance on a particular bank account.
+- Withdraw balance on a particular bank account.
+- Transfer balance to another account.
+- Check the all account holder lists.
+
+#### Test Results
+All tests passed.
+
+### Challenges and Solutions
+
+#### Database Connection Management
+- **Issue**: Database connection: First of all I thought it was an URL issue, I’ve tried to change default IP instead of localhost, then tried with many types of port.
+- **Solution**: Finally it was solved by a JDBC connector jar file, and I needed to add this to the project library.
+
+#### Concurrency Handling
+- **Issue**: I have used synchronized blocks for thread safety in deposits.
+- **Solution**: Implemented synchronized blocks to handle concurrency.
+
+#### Error Handling
+- **Issue**: Faced many errors in the program.
+- **Solution**: Added error messages for better error handling.
